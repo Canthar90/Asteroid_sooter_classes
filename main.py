@@ -10,6 +10,43 @@ class Ship(pygame.sprite.Sprite):
         self.image = pygame.image.load("images\spaceship.png").convert_alpha()
         self.image = pygame.transform.scale(self.image, (80,90))
         self.rect = self.image.get_rect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT-100))
+        self.can_shoot = True
+        self.shoot_time = 0
+        
+    def input_position(self):
+        pos = pygame.mouse.get_pos()
+        pos_x = pos[0]
+        if pos_x > 20 and pos_x < WINDOW_WIDTH -20 and  self.rect.centerx != pos_x:
+            if pos_x > self.rect.centerx:
+                if pos_x - self.rect.centerx > 4 or pos_x - self.rect.centerx < -4:
+                    self.rect.centerx += 4
+                else:
+                    self.rect.centerx += 1
+            else:
+                if pos_x - self.rect.centerx > 4 or pos_x - self.rect.centerx < -4:
+                    self.rect.centerx -= 4
+                else:
+                    self.rect.centerx -= 1
+                    
+    def laser_shot(self):
+        mouse = pygame.mouse.get_pressed()[0]
+        delta = 400
+        if mouse:
+            if not self.can_shoot:
+                current_time = pygame.time.get_ticks()
+                if current_time - self.shoot_time > delta:
+                    self.can_shoot = True
+            else:
+                laser = Laser(position=self.rect.midtop, groups=laser_group)
+                self.shoot_time = pygame.time.get_ticks()
+                self.can_shoot = False
+            
+        
+    
+    def update(self):
+        self.laser_shot()
+        self.input_position()
+        
         
         
 class Laser(pygame.sprite.Sprite):
@@ -43,7 +80,7 @@ ship = Ship(spaceship_group)
 # game loop
 while True:
     
-    dt = clock.tick()/1000
+    dt = clock.tick(120)/1000
     
     
     #inputs 
@@ -52,13 +89,13 @@ while True:
             pygame.quit()
             sys.exit()
             
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            laser = Laser(position=ship.rect.midtop, groups=laser_group)
             
     # background
     display_surface.blit(background_surf, (0,0))
+    
     # graphics
-    spaceship_group.draw(display_surface)  
+    spaceship_group.draw(display_surface)
+    spaceship_group.update()  
     laser_group.draw(display_surface)      
             
             
