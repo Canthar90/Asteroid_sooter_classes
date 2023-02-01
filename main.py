@@ -1,5 +1,6 @@
 import pygame
 import sys
+import random
 
 
 class Ship(pygame.sprite.Sprite):
@@ -41,12 +42,9 @@ class Ship(pygame.sprite.Sprite):
                 self.shoot_time = pygame.time.get_ticks()
                 self.can_shoot = False
             
-        
-    
     def update(self):
         self.laser_shot()
         self.input_position()
-        
         
         
 class Laser(pygame.sprite.Sprite):
@@ -60,10 +58,32 @@ class Laser(pygame.sprite.Sprite):
         
         # float base position
         self.pos = pygame.math.Vector2(self.rect.topleft)
+        self.direction = pygame.math.Vector2(0, -1)
+        self.speed = 470
         
     def update(self):
-        self.pos.y -= 450 * dt
-        self.rect.y = round(self.pos.y)
+        self.pos += self.direction * self.speed *dt
+        self.rect.topleft = (round(self.pos.x), round(self.pos.y))
+        
+        
+class Meteor(pygame.sprite.Sprite):
+    """Creates meteor object"""
+    def __init__(self, position, groups):
+        super().__init__(groups)
+        
+        self.image = pygame.image.load(r"images\asteroid.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (80, 80))
+        self.rect = self.image.get_rect(midbottom=(position))
+        
+        # float base position
+        self.pos = pygame.math.Vector2(self.rect.midbottom)
+        self.direction = pygame.math.Vector2(random.randint(-1,1), 1)
+        self.speed = 300
+        
+    def update(self):
+        self.pos += self.direction * self.speed * dt
+        self.rect.topleft = (round(self.pos.x), round(self.pos.y))
+
 
 # base setup
 pygame.init()
@@ -79,10 +99,13 @@ background_surf = pygame.transform.scale(background_surf, (WINDOW_WIDTH, WINDOW_
 # sprite groups
 spaceship_group = pygame.sprite.Group()
 laser_group = pygame.sprite.Group()
+meteor_group = pygame.sprite.Group()
 
 # sprite creation
 ship = Ship(spaceship_group)
 
+spawn_meteor = pygame.event.custom_type()
+pygame.time.set_timer(spawn_meteor, 500)
 
 # game loop
 while True:
@@ -96,6 +119,10 @@ while True:
             pygame.quit()
             sys.exit()
             
+        if event.type == spawn_meteor:
+            position = (random.randint(-100, WINDOW_WIDTH+100), -100)
+            meteor = Meteor(position=position, groups=meteor_group)
+            
             
     # background
     display_surface.blit(background_surf, (0,0))
@@ -105,6 +132,8 @@ while True:
     spaceship_group.update()  
     laser_group.draw(display_surface)   
     laser_group.update()   
+    meteor_group.draw(display_surface)
+    meteor_group.update()
             
             
     pygame.display.update()
