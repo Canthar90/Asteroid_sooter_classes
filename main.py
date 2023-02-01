@@ -71,18 +71,34 @@ class Meteor(pygame.sprite.Sprite):
     def __init__(self, position, groups):
         super().__init__(groups)
         
+        # randomizing meteot size
+        w = random.randint(60, 160)
+        
         self.image = pygame.image.load(r"images\asteroid.png").convert_alpha()
-        self.image = pygame.transform.scale(self.image, (80, 80))
+        self.scaled = pygame.transform.scale(self.image, (w, w))
+        self.image = self.scaled
         self.rect = self.image.get_rect(midbottom=(position))
         
         # float base position
         self.pos = pygame.math.Vector2(self.rect.midbottom)
         self.direction = pygame.math.Vector2(random.randint(-1,1), 1)
-        self.speed = 300
+        # random speed
+        self.speed = random.randint(230, 400)
+        
+        # rotation logic
+        self.rotation = 0
+        self.rotation_speed = random.randint(10, 30)
+        
+    def rotate(self):
+        self.rotation += self.rotation_speed * dt
+        rotated_surf = pygame.transform.rotozoom(self.scaled, self.rotation,1)
+        self.image = rotated_surf
+        self.rect = self.image.get_rect(center=self.rect.center)
         
     def update(self):
         self.pos += self.direction * self.speed * dt
         self.rect.topleft = (round(self.pos.x), round(self.pos.y))
+        self.rotate()
         
         
 class Score:
