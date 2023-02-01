@@ -41,10 +41,17 @@ class Ship(pygame.sprite.Sprite):
                 laser = Laser(position=self.rect.midtop, groups=laser_group)
                 self.shoot_time = pygame.time.get_ticks()
                 self.can_shoot = False
+                
+    def meteor_collisions(self):
+        if pygame.sprite.spritecollide(self, meteor_group, False):
+            pygame.quit()
+            sys.exit()
             
     def update(self):
         self.laser_shot()
         self.input_position()
+        
+        self.meteor_collisions()
         
         
 class Laser(pygame.sprite.Sprite):
@@ -56,14 +63,22 @@ class Laser(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (15, 25))
         self.rect = self.image.get_rect(midbottom=(position))
         
+        
         # float base position
         self.pos = pygame.math.Vector2(self.rect.topleft)
         self.direction = pygame.math.Vector2(0, -1)
         self.speed = 470
         
+    def meteor_colisions(self):
+        if pygame.sprite.spritecollide(self, meteor_group, True):
+            self.kill()
+        
     def update(self):
         self.pos += self.direction * self.speed *dt
         self.rect.topleft = (round(self.pos.x), round(self.pos.y))
+        self.meteor_colisions()
+        if self.rect.bottom < 0:
+            self.kill()
         
         
 class Meteor(pygame.sprite.Sprite):
@@ -72,12 +87,13 @@ class Meteor(pygame.sprite.Sprite):
         super().__init__(groups)
         
         # randomizing meteot size
-        w = random.randint(60, 160)
+        w = random.randint(60, 120)
         
         self.image = pygame.image.load(r"images\asteroid.png").convert_alpha()
         self.scaled = pygame.transform.scale(self.image, (w, w))
         self.image = self.scaled
         self.rect = self.image.get_rect(midbottom=(position))
+        
         
         # float base position
         self.pos = pygame.math.Vector2(self.rect.midbottom)
@@ -95,10 +111,13 @@ class Meteor(pygame.sprite.Sprite):
         self.image = rotated_surf
         self.rect = self.image.get_rect(center=self.rect.center)
         
+        
     def update(self):
         self.pos += self.direction * self.speed * dt
         self.rect.topleft = (round(self.pos.x), round(self.pos.y))
         self.rotate()
+        if self.rect.top > WINDOW_HEIGHT + 200:
+            self.kill()
         
         
 class Score:
