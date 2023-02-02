@@ -145,6 +145,49 @@ class Score:
                          width=8, border_radius=3)
 
 
+class Menu:
+    """Creates menu sprite"""
+    def __init__(self):
+        self.font = pygame.font.Font("images\subatomic.tsoonami.ttf", 40)
+        
+        resume_text = "Resume"
+        self.resume = self.font.render(resume_text, True, (255, 255, 255))
+        self.resume_rect = self.resume.get_rect(midbottom=(WINDOW_WIDTH/2, WINDOW_HEIGHT/2))
+        
+        
+        new_game_text = "New Game"
+        self.new_game = self.font.render(new_game_text, True, (255, 255, 255))
+        self.new_game_rect = self.new_game.get_rect(midbottom=(WINDOW_WIDTH/2, WINDOW_HEIGHT - 2*WINDOW_HEIGHT/3))
+    
+        
+        exit_text = "Exit"
+        self.exit = self.font.render(exit_text, True, (255, 255, 255))
+        self.exit_rect = self.exit.get_rect(midbottom=(WINDOW_WIDTH/2, WINDOW_HEIGHT - WINDOW_HEIGHT/3))
+             
+    def click_detection(self):
+        mouse = pygame.mouse.get_pos()
+        if self.resume_rect.collidepoint(mouse) and pygame.mouse.get_pressed()[0]:
+            return False
+        elif self.new_game_rect.collidepoint(mouse) and pygame.mouse.get_pressed()[0]:
+            laser_group.empty()
+            meteor_group.empty()
+            return False
+        elif self.exit_rect.collidepoint(mouse) and pygame.mouse.get_pressed()[0]:
+            pygame.quit()
+            sys.exit
+        else:
+            return True
+            
+    def display(self):
+        display_surface.blit(self.new_game, self.new_game_rect)
+        display_surface.blit(self.resume, self.resume_rect)
+        display_surface.blit(self.exit, self.exit_rect)
+    
+    def update(self):
+        return self.click_detection()
+    
+        
+
 # base setup
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1290, 720
@@ -161,9 +204,10 @@ spaceship_group = pygame.sprite.Group()
 laser_group = pygame.sprite.Group()
 meteor_group = pygame.sprite.Group()
 
+
 # sprite creation
 ship = Ship(spaceship_group)
-
+menu = Menu()
 spawn_meteor = pygame.event.custom_type()
 pygame.time.set_timer(spawn_meteor, 500)
 
@@ -172,6 +216,8 @@ score = Score()
 background_music = pygame.mixer.Sound(r"sounds\tales-of-the-caped-crusader-theme-20391.mp3")
 background_music.set_volume(0.6)
 background_music.play(-1)
+
+menu_flag = True
 
 # game loop
 while True:
@@ -185,23 +231,31 @@ while True:
             pygame.quit()
             sys.exit()
             
-        if event.type == spawn_meteor:
+        if event.type == spawn_meteor and not menu_flag:
             position = (random.randint(-100, WINDOW_WIDTH+100),
                         random.randint(-150, -50))
             meteor = Meteor(position=position, groups=meteor_group)
+            
+        if event.type == pygame.K_ESCAPE:
+            menu = True
             
             
     # background
     display_surface.blit(background_surf, (0,0))
     
-    # graphics
-    spaceship_group.draw(display_surface)
-    spaceship_group.update()  
-    laser_group.draw(display_surface)   
-    laser_group.update()   
-    meteor_group.draw(display_surface)
-    meteor_group.update()
-    score.display()
+    
+    if menu_flag:
+        menu.display()
+        menu_flag = menu.update()
+    else:
+        # graphics
+        spaceship_group.draw(display_surface)
+        spaceship_group.update()  
+        laser_group.draw(display_surface)   
+        laser_group.update()   
+        meteor_group.draw(display_surface)
+        meteor_group.update()
+        score.display()
             
             
     pygame.display.update()
