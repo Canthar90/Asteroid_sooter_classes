@@ -47,6 +47,7 @@ class Ship(pygame.sprite.Sprite):
     def meteor_collisions(self):
         if pygame.sprite.spritecollide(self, meteor_group,
                                        False, pygame.sprite.collide_mask):
+            menu.game_over = True
             return True 
         else:
             return False
@@ -170,6 +171,7 @@ class Menu:
         self.game_over = True
              
     def click_detection(self):
+        """Depending on choice it starts resumes or exits the game"""
         mouse = pygame.mouse.get_pos()
         if self.resume_rect.collidepoint(mouse) and pygame.mouse.get_pressed()[0]:
             delta_resume = pygame.time.get_ticks()
@@ -218,7 +220,8 @@ meteor_group = pygame.sprite.Group()
 ship = Ship(spaceship_group)
 menu = Menu()
 spawn_meteor = pygame.event.custom_type()
-pygame.time.set_timer(spawn_meteor, 500)
+timer_interval = 500
+pygame.time.set_timer(spawn_meteor, timer_interval)
 
 score = Score()
 
@@ -227,6 +230,7 @@ background_music.set_volume(0.6)
 background_music.play(-1)
 
 menu_flag = True
+start_time = pygame.time.get_ticks()//1000
 
 # game loop
 while True:
@@ -243,12 +247,22 @@ while True:
             position = (random.randint(-100, WINDOW_WIDTH+100),
                         random.randint(-150, -50))
             meteor = Meteor(position=position, groups=meteor_group)
-            
+        
+        # creating pause when user press escape button
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 menu.delta_stop_game = pygame.time.get_ticks()
                 menu_flag = True           
-            
+    
+    # increasing difficulty over time
+    current_time = pygame.time.get_ticks()//1000
+    if current_time - start_time > 10 and timer_interval >= 100 and not menu_flag:
+        timer_interval -= 10
+        start_time = current_time
+        pygame.time.set_timer(spawn_meteor, timer_interval)
+    elif menu_flag:
+        start_time = current_time
+    
     # background
     display_surface.blit(background_surf, (0,0))
     
