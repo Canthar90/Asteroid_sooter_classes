@@ -47,14 +47,15 @@ class Ship(pygame.sprite.Sprite):
     def meteor_collisions(self):
         if pygame.sprite.spritecollide(self, meteor_group,
                                        False, pygame.sprite.collide_mask):
-            pygame.quit()
-            sys.exit()
+            return True 
+        else:
+            return False
             
     def update(self):
         self.laser_shot()
         self.input_position()
         
-        self.meteor_collisions()
+        return self.meteor_collisions()
         
         
 class Laser(pygame.sprite.Sprite):
@@ -134,9 +135,10 @@ class Meteor(pygame.sprite.Sprite):
 class Score:
     def __init__(self):
         self.font = pygame.font.Font("images\subatomic.tsoonami.ttf", 40)
+        self.delta = 0
         
     def display(self):
-        score_text = f"Score: {pygame.time.get_ticks()//1000}"
+        score_text = f"Score: {(pygame.time.get_ticks()- self.delta)//1000 }"
         text_surf = self.font.render(score_text, True, (255, 255, 255))
         text_rect = text_surf.get_rect(midbottom = (WINDOW_WIDTH/2,
                                                     WINDOW_HEIGHT-20))
@@ -163,14 +165,21 @@ class Menu:
         exit_text = "Exit"
         self.exit = self.font.render(exit_text, True, (255, 255, 255))
         self.exit_rect = self.exit.get_rect(midbottom=(WINDOW_WIDTH/2, WINDOW_HEIGHT - WINDOW_HEIGHT/3))
+        
+        self.delta_stop_game = 0
+        self.game_over = True
              
     def click_detection(self):
         mouse = pygame.mouse.get_pos()
         if self.resume_rect.collidepoint(mouse) and pygame.mouse.get_pressed()[0]:
+            delta_resume = pygame.time.get_ticks()
+            score.delta =  delta_resume -self.delta_stop_game
             return False
         elif self.new_game_rect.collidepoint(mouse) and pygame.mouse.get_pressed()[0]:
             laser_group.empty()
             meteor_group.empty()
+            score.delta = pygame.time.get_ticks()
+            self.game_over = False
             return False
         elif self.exit_rect.collidepoint(mouse) and pygame.mouse.get_pressed()[0]:
             pygame.quit()
@@ -180,7 +189,7 @@ class Menu:
             
     def display(self):
         display_surface.blit(self.new_game, self.new_game_rect)
-        display_surface.blit(self.resume, self.resume_rect)
+        if not self.game_over: display_surface.blit(self.resume, self.resume_rect) 
         display_surface.blit(self.exit, self.exit_rect)
     
     def update(self):
@@ -224,7 +233,6 @@ while True:
     
     dt = clock.tick(120)/1000
     
-    
     #inputs 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -236,21 +244,21 @@ while True:
                         random.randint(-150, -50))
             meteor = Meteor(position=position, groups=meteor_group)
             
-        if event.type == pygame.K_ESCAPE:
-            menu = True
-            
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                menu.delta_stop_game = pygame.time.get_ticks()
+                menu_flag = True           
             
     # background
     display_surface.blit(background_surf, (0,0))
     
-    
     if menu_flag:
         menu.display()
         menu_flag = menu.update()
-    else:
+    elif not menu_flag:
         # graphics
         spaceship_group.draw(display_surface)
-        spaceship_group.update()  
+        menu_flag = ship.update() 
         laser_group.draw(display_surface)   
         laser_group.update()   
         meteor_group.draw(display_surface)
