@@ -175,7 +175,7 @@ class Menu:
         mouse = pygame.mouse.get_pos()
         if self.resume_rect.collidepoint(mouse) and pygame.mouse.get_pressed()[0]:
             delta_resume = pygame.time.get_ticks()
-            score.delta =  delta_resume -self.delta_stop_game
+            score.delta +=  delta_resume - self.delta_stop_game
             return False
         elif self.new_game_rect.collidepoint(mouse) and pygame.mouse.get_pressed()[0]:
             laser_group.empty()
@@ -231,7 +231,7 @@ background_music.play(-1)
 
 menu_flag = True
 start_time = pygame.time.get_ticks()//1000
-
+stop_time = start_time
 # game loop
 while True:
     
@@ -252,7 +252,8 @@ while True:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 menu.delta_stop_game = pygame.time.get_ticks()
-                menu_flag = True           
+                menu_flag = True 
+                stop_time = pygame.time.get_ticks()//1000          
     
     # increasing difficulty over time
     current_time = pygame.time.get_ticks()//1000
@@ -261,7 +262,8 @@ while True:
         start_time = current_time
         pygame.time.set_timer(spawn_meteor, timer_interval)
     elif menu_flag:
-        start_time = current_time
+        current_time = stop_time
+        start_time = stop_time
     
     # background
     display_surface.blit(background_surf, (0,0))
